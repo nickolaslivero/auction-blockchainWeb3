@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leilão</title>
+    <style>
+        .popup {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid black;
+            display: none;
+            z-index: 1000;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+    </style>
+    <script>
+        async function placeBid(event) {
+            event.preventDefault();
+            const amount = parseFloat(document.querySelector('input[name="amount"]').value);
+            const highestBid = parseFloat(document.querySelector('#highestBid').innerText);
+            if (amount <= highestBid) {
+                showPopup("Seu lance deve ser maior que o lance atual mais alto de " + highestBid + " Ether.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/bid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: amount })
+                });
+                const result = await response.json();
+                if (result.error) {
+                    showPopup(result.error);
+                } else {
+                    showPopup(result.message);
+                    updateAuctionData();
+                }
+            } catch (error) {
+                showPopup("Erro ao fazer o lance.");
+            }
+        }
+
+        function showPopup(message) {
+            document.querySelector('.popup').innerText = message;
+            document.querySelector('.popup').style.display = 'block';
+            document.querySelector('.overlay').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.querySelector('.popup').style.display = 'none';
+            document.querySelector('.overlay').style.display = 'none';
+        }
+
+        async function updateAuctionData() {
+            try {
+                const response = await fetch('/auction_data');
+                const data = await response.json();
+                if (!data.error) {
+                    document.querySelector('#highestBid').innerText = data.highest_bid;
+                    document.querySelector('#highestBidder').innerText = data.highest_bidder;
+                }
+            } catch (error) {
+                console.error("Erro ao atualizar os dados do leilão:", error);
+            }
+        }
+
+        setInterval(updateAuctionData, 10000); // Atualiza a cada 10 segundos
+        window.onload = updateAuctionData;
+    </script>
+</head>
+<body>
+    <h1>Leilão</h1>
+    <p>Lance Atual: <span id="highestBid">{{ highest_bid }} Ether</span></p>
+    <p>Maior Licitante: <span id="highestBidder">{{ highest_bidder }}</span></p>
+    <form onsubmit="placeBid(event)">
+        <input type="number" step="0.01" name="amount" placeholder="Valor do Lance em Ether" required>
+        <button type="submit">Dar Lance</button>
+    </form>
+    <div class="popup"></div>
+    <div class="overlay" onclick="closePopup()"></div>
+</body>
+</html>
