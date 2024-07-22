@@ -13,6 +13,7 @@ function Home() {
   const [bidAmount, setBidAmount] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [bidHistory, setBidHistory] = useState([]);
   const [itemInfo, setItemInfo] = useState({
     title: '',
     description: '',
@@ -54,6 +55,8 @@ function Home() {
         const highestBidder = await auction.methods.highestBidder().call();
         setHighestBidder(highestBidder);
 
+        updateBidHistory(auction);
+
         console.log('Accounts:', accounts);
         console.log('Highest Bid:', highestBid);
         console.log('Highest Bidder:', highestBidder);
@@ -64,6 +67,14 @@ function Home() {
 
     load();
   }, [itemId]);
+
+  const updateBidHistory = async (auctionContract) => {
+    const bidEvents = await auctionContract.getPastEvents('HighestBidIncreased', {
+      fromBlock: 0,
+      toBlock: 'latest'
+    });
+    setBidHistory(bidEvents);
+  };
 
   const placeBid = async () => {
     setErrorMessage('');
@@ -98,6 +109,8 @@ function Home() {
       const highestBidder = await auction.methods.highestBidder().call();
       setHighestBidder(highestBidder);
 
+      updateBidHistory(auction);
+
       setSuccessMessage('Lance realizado com sucesso!');
       console.log('New Highest Bid:', highestBid);
       console.log('New Highest Bidder:', highestBidder);
@@ -109,7 +122,7 @@ function Home() {
 
   return (
     <div className="container">
-        <button onClick={() => navigate('/')}>Voltar para Lista de Itens</button>
+      <button onClick={() => navigate('/')}>Voltar para Lista de Itens</button>
       <h1>Leilão</h1>
       <div className="item-info">
         <h2>{itemInfo.title}</h2>
@@ -127,6 +140,14 @@ function Home() {
       <button onClick={placeBid}>Dar Lance</button>
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+      <h2>Histórico de Lances</h2>
+      <ul>
+        {bidHistory.map((bid, index) => (
+          <li key={index}>
+            Licitante: {bid.returnValues.bidder} - Valor: {web3.utils.fromWei(bid.returnValues.amount, 'ether')} Ether
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
