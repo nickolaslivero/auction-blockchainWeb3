@@ -9,9 +9,11 @@
     "@testing-library/user-event": "^13.5.0",
     "@truffle/contract": "^4.6.31",
     "axios": "^1.7.2",
+    "big-integer": "^1.6.52",
     "form-data": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.25.1",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
     "web3": "^4.11.0"
@@ -20,7 +22,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "copy-contracts": "copyfiles -u 2 build/contracts/*.json auction-front/src/contracts",
+    "compile": "truffle compile && npm run copy-contracts",
+    "migrate": "truffle migrate --reset && npm run copy-contracts"
   },
   "eslintConfig": {
     "extends": [
@@ -41,6 +46,7 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "copyfiles": "^2.4.1"
   }
 }

@@ -1,7 +1,9 @@
-const Auction = artifacts.require("Auction");
+const ItemRegistry = artifacts.require("ItemRegistry");
+const ItemAuction = artifacts.require("ItemAuction");
 
-module.exports = function (deployer, network, accounts) {
-  const biddingTime = 600;
-  const beneficiary = accounts[0];
-  deployer.deploy(Auction, biddingTime, beneficiary);
+module.exports = async function (deployer, network, accounts) {
+  await deployer.deploy(ItemRegistry);
+  const itemRegistryInstance = await ItemRegistry.deployed();
+  
+  await deployer.deploy(ItemAuction, 0, accounts[0]);
 };
