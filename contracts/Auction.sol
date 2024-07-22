@@ -2,26 +2,40 @@
 pragma solidity ^0.8.0;
 
 contract Auction {
-    address public owner;
-    uint public highestBid;
-    address public highestBidder;
-    bool public ended;
+    address payable public beneficiary;
+    uint public auctionEndTime;
 
-    mapping(address => uint) public bids;
+    address public highestBidder;
+    uint public highestBid;
+
+    mapping(address => uint) pendingReturns;
+
+    bool ended;
 
     event HighestBidIncreased(address bidder, uint amount);
     event AuctionEnded(address winner, uint amount);
 
-    constructor() {
-        owner = msg.sender;
+    constructor(
+        uint _biddingTime,
+        address payable _beneficiary
+    ) {
+        beneficiary = _beneficiary;
+        auctionEndTime = block.timestamp + _biddingTime;
     }
 
     function bid() public payable {
-        require(!ended, "Auction already ended.");
-        require(msg.value > highestBid, "There already is a higher bid.");
+        require(
+            block.timestamp <= auctionEndTime,
+            "Auction already ended."
+        );
+
+        require(
+            msg.value > highestBid,
+            "There already is a higher bid."
+        );
 
         if (highestBid != 0) {
-            bids[highestBidder] += highestBid;
+            pendingReturns[highestBidder] += highestBid;
         }
 
         highestBidder = msg.sender;
@@ -30,25 +44,25 @@ contract Auction {
     }
 
     function withdraw() public returns (bool) {
-        uint amount = bids[msg.sender];
+        uint amount = pendingReturns[msg.sender];
         if (amount > 0) {
-            bids[msg.sender] = 0;
+            pendingReturns[msg.sender] = 0;
 
             if (!payable(msg.sender).send(amount)) {
-                bids[msg.sender] = amount;
+                pendingReturns[msg.sender] = amount;
                 return false;
             }
         }
         return true;
     }
 
-    function endAuction() public {
-        require(msg.sender == owner, "You are not the owner.");
-        require(!ended, "Auction already ended.");
+    function auctionEnd() public {
+        require(block.timestamp >= auctionEndTime, "Auction not yet ended.");
+        require(!ended, "auctionEnd has already been called.");
 
         ended = true;
         emit AuctionEnded(highestBidder, highestBid);
 
-        payable(owner).transfer(highestBid);
+        beneficiary.transfer(highestBid);
     }
 }
