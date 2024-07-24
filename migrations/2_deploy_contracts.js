@@ -1,9 +1,9 @@
-const ItemRegistry = artifacts.require("ItemRegistry");
-const ItemAuction = artifacts.require("ItemAuction");
+const AuctionSystem = artifacts.require("AuctionSystem");
 
 module.exports = async function (deployer, network, accounts) {
-  await deployer.deploy(ItemRegistry);
-  const itemRegistryInstance = await ItemRegistry.deployed();
+  await deployer.deploy(AuctionSystem);
   
-  await deployer.deploy(ItemAuction, 0, accounts[0]);
+  const auctionSystemInstance = await AuctionSystem.deployed();
+
+  console.log('AuctionSystem deployed at:', auctionSystemInstance.address);
 };
